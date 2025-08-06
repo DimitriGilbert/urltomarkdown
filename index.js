@@ -9,11 +9,17 @@ const port = process.env.PORT;
 const app = express();
 
 const rateLimiter = rateLimit({
-	windowMs: 30 * 1000,
-	max: 5,
-	message: 'Rate limit exceeded',
-	headers: true
-});
+    windowMs: 30 * 1000,
+    max: 5,
+    message: 'Rate limit exceeded',
+    headers: true,
+    skip: (req, res) => {
+      // Skip rate limiting for requests from litechat.dev
+      const referer = req.get('Referer') || '';
+      const origin = req.get('Origin') || '';
+      return referer.includes('litechat.dev') || origin.includes('litechat.dev');
+    }
+  });
 
 app.set('trust proxy', 1);
 
