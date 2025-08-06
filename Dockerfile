@@ -1,22 +1,19 @@
-FROM node:alpine
+FROM node:22-alpine AS builder
 
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+FROM node:22-alpine
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeuser -u 1001
+WORKDIR /app
+# Copy node_modules from builder stage
+COPY --from=builder --chown=nodeuser:nodejs /app/node_modules ./node_modules
+COPY --chown=nodeuser:nodejs . .
+USER nodeuser
 EXPOSE 1337
-
-WORKDIR /var/www
-COPY package.json /var/www/
-RUN npm install
-COPY html_table_to_markdown.js /var/www
-COPY url_to_markdown_apple_dev_docs.js /var/www
-COPY url_to_markdown_common_filters.js /var/www
-COPY url_to_markdown_formatters.js /var/www
-COPY url_to_markdown_processor.js /var/www
-COPY url_to_markdown_readers.js /var/www
-COPY index.js /var/www/
-RUN mkdir -p /var/www/tests
-COPY tests/url_to_markdown_apple_dev_docs.test.js /var/www/tests
-COPY tests/url_to_markdown_common_filters.test.js /var/www/tests
-COPY tests/url_to_markdown_formatters.test.js /var/www/tests
-COPY tests/url_to_markdown_processor.test.js /var/www/tests
-COPY tests/url_to_markdown_readers.test.js /var/www/tests
-RUN npm test
-ENV PORT=1337
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:1337/ || exit 1
+CMD ["node", "index.js"]
