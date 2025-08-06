@@ -16,7 +16,8 @@ const rateLimiter = rateLimit({
     skip: (req, res) => {
       // Skip rate limiting for requests from litechat.dev
       const referer = req.get('Referer') || '';
-      const origin = req.get('Origin') || ''; 
+      const origin = req.get('Origin') || '';
+      const litechatHeader = req.get('X-LiteChat-Auth');	    
       return referer.includes('litechat.dev') || origin.includes('litechat.dev') || litechatHeader === 'LiteChat is G.O.A.T.';
     }
   });
