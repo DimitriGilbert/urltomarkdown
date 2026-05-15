@@ -1,0 +1,8 @@
+services:
+  urltomarkdown:
+    build: .
+    ports:
+      - "31337:1337"
+    environment:
+      - PORT=1337
+    restart: unless-stopped
